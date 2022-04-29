@@ -1,4 +1,7 @@
-use std::slice::Iter;
+pub(crate) mod padding;
+mod ngrams;
+
+use padding::Padder;
 
 /// Returns a padded sequence of items before ngram extraction.
 ///
@@ -31,173 +34,130 @@ pub fn pad_sequence_right<'a>(sequence: impl Iterator<Item=&'a str> + 'static, r
 }
 
 /// Return the ngrams generated from a sequence of items, as an iterator.
-// this is a windowing function on a list
-// pub fn ngrams<'a>(mut sequence: impl Iterator<Item=&'a str> + 'static, n: usize) -> impl Iterator<Item=impl Iterator<Item=&'a str> + 'a> + 'a {
-pub fn ngrams<'a>(sequence: &'a Vec<&'a str>, n: usize) -> impl Iterator<Item=impl Iterator<Item=&'a &'a str> + 'a> + 'a {
-    let mut ngram = Vec::new();
-
-    NGramSequenceIter { sequence: sequence, n, current_ngram: ngram, index: 0, sequence_iter: None }
-}
-
-struct NGramSequenceIter<'a> {
-    sequence_iter: Option<Box<dyn Iterator<Item=&'a &'a str> + 'a>>,
-    sequence: &'a Vec<&'a str>,
-    n: usize,
-    current_ngram: Vec<&'a &'a str>,
-    index: usize,
-}
-
-impl<'a> Iterator for NGramSequenceIter<'a> {
-    type Item = Box<dyn Iterator<Item=&'a &'a str> + 'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current_ngram.len() == 0 {
-            self.sequence_iter = Some(Box::new(self.sequence.iter()));
-            for i in 0..self.n {
-                self.current_ngram.push(self.sequence_iter.as_mut().unwrap().next().unwrap());
-                self.index += 1;
-            }
-
-            return Some(Box::new(self.current_ngram.clone().into_iter()));
-        } else {
-            self.current_ngram.remove(0);
-            let maybe_next = self.sequence_iter.as_mut().unwrap().next();
-            self.index += 1;
-            return if maybe_next.is_some() {
-                self.current_ngram.push(&maybe_next.unwrap());
-                Some(Box::new(self.current_ngram.clone().into_iter()))
-            } else {
-                None
-            };
-        }
-    }
-}
-
-pub(crate) struct Padder<'a> {
-    n: usize,
-    text: Box<dyn Iterator<Item=&'a str>>,
-    pad_left: bool,
-    left_index: isize,
-    left_pad_symbol: &'static str,
-    pad_right: bool,
-    right_index: isize,
-    right_pad_symbol: &'static str,
-}
-
-impl<'a> Iterator for Padder<'a> {
-    type Item = &'a str;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.pad_left && self.left_index < self.n as isize {
-            self.left_index += 1;
-            return Some(self.left_pad_symbol);
-        } else {
-            let maybe_next = self.text.next();
-            if maybe_next.is_some() {
-                return maybe_next;
-            } else {
-                if self.pad_right && self.right_index < self.n as isize {
-                    self.right_index += 1;
-                    return Some(self.right_pad_symbol);
-                }
-            }
-        }
-
-        None
-    }
-}
-
-impl<'a> Padder<'a> {
-    pub(crate) fn new(text: Box<dyn Iterator<Item=&'a str>>, pad_left: bool, left_pad_symbol: &'static str,
-                      pad_right: bool, right_pad_symbol: &'static str, n: usize, ) -> Self {
-        Self { text, n, pad_left, left_index: 1, left_pad_symbol, pad_right, right_index: 1, right_pad_symbol }
-    }
+///
+/// sequence: the sequence items in the form of an Iterator over &&str
+/// use like:
+/// ```
+/// let sequence = vec!["a", "b", "c"];
+/// let mut bigrams = rltk::util::ngrams(sequence.iter(), 2);
+///
+/// let bigram1 = vec!["a", "b"];
+/// let bigram2 = vec!["b", "c"];
+/// let expected = vec![bigram1.iter(), bigram2.iter()];
+///
+/// for (mut left_outer,mut right_outer) in bigrams.zip(expected.into_iter()){
+///     for (left_inner,right_inner) in left_outer.zip(right_outer){
+///         assert_eq!(left_inner, right_inner);
+///     }
+/// }
+/// ```
+///
+pub fn ngrams<'a>(sequence: impl Iterator<Item=&'a &'a str> + 'a, n: usize) -> impl Iterator<Item=impl Iterator<Item=&'a &'a str> + 'a> + 'a {
+    ngrams::NGramSequenceIter::new(sequence, n)
 }
 
 
 #[cfg(test)]
 mod tests {
+    use std::slice::Iter;
     use super::*;
 
     #[test]
     fn test_pad_both_ends_default_n2() {
         let text = vec!["a", "b", "c"].into_iter();
         let padded = pad_sequence(text, true, "<s>", true, "</s>", 2);
-        assert!(equal(padded, vec!["<s>", "a", "b", "c", "</s>"].into_iter()));
+        should_be_equal_lists(padded, vec!["<s>", "a", "b", "c", "</s>"]);
     }
 
     #[test]
     fn test_pad_left() {
         let text = vec!["a", "b", "c"].into_iter();
         let padded = pad_sequence_left(text, "<s>", 2);
-        assert!(equal(padded, vec!["<s>", "a", "b", "c"].into_iter()));
+        should_be_equal_lists(padded, vec!["<s>", "a", "b", "c"]);
     }
 
     #[test]
     fn test_pad_right() {
         let text = vec!["a", "b", "c"].into_iter();
         let padded = pad_sequence_right(text, "</s>", 2);
-        assert!(equal(padded, vec!["a", "b", "c", "</s>"].into_iter()));
+
+        should_be_equal_lists(padded, vec!["a", "b", "c", "</s>"]);
     }
 
     #[test]
     fn test_pad_both_ends_default_n_eq_3() {
         let text = vec!["a", "b", "c"].into_iter();
         let padded = pad_sequence(text, true, "<s>", true, "</s>", 3);
-        assert!(equal(padded, vec!["<s>", "<s>", "a", "b", "c", "</s>", "</s>"].into_iter()));
+        should_be_equal_lists(padded, vec!["<s>", "<s>", "a", "b", "c", "</s>", "</s>"]);
     }
 
     #[test]
     fn test_pad_both_ends_non_default_symbols() {
         let text = vec!["a", "b", "c"].into_iter();
         let padded = pad_sequence(text, true, "left", true, "right", 2);
-        assert!(equal(padded, vec!["left", "a", "b", "c", "right"].into_iter()));
+
+        should_be_equal_lists(padded, vec!["left", "a", "b", "c", "right"]);
     }
 
     #[test]
     fn test_bigrams() {
         let sequence = vec!["a", "b", "c", "d"];
-        let mut bigrams = ngrams(&sequence, 2);
-        let mut bigram = bigrams.next().unwrap();
-        let item = bigram.next().unwrap();
-        assert_eq!(*item, "a");
-        let item = bigram.next().unwrap();
-        assert_eq!(*item, "b");
-        assert!(bigram.next().is_none());
+        let mut bigrams = ngrams(sequence.iter(), 2);
+        let bigram1 = vec!["a", "b"];
+        let bigram2 = vec!["b", "c"];
+        let bigram3 = vec!["c", "d"];
+        let expected = vec![bigram1.iter(), bigram2.iter(), bigram3.iter()];
 
-        let mut bigram = bigrams.next().unwrap();
-        let item = bigram.next().unwrap();
-        assert_eq!(*item, "b");
-        let item = bigram.next().unwrap();
-        assert_eq!(*item, "c");
-        assert!(bigram.next().is_none());
-
-        let mut bigram = bigrams.next().unwrap();
-        let item = bigram.next().unwrap();
-        assert_eq!(*item, "c");
-        let item = bigram.next().unwrap();
-        assert_eq!(*item, "d");
-        assert!(bigram.next().is_none());
+        should_be_equal_list_of_lists(&mut bigrams, expected)
     }
 
+    #[test]
+    fn test_trigrams() {
+        let sequence = vec!["a", "b", "c", "d", "e"];
+        let mut bigrams = ngrams(sequence.iter(), 3);
+        let trigram1 = vec!["a", "b", "c"];
+        let trigram2 = vec!["b", "c", "d"];
+        let trigram3 = vec!["c", "d", "e"];
+        let expected = vec![trigram1.iter(), trigram2.iter(), trigram3.iter()];
 
-    fn equal<'a>(mut l1: impl Iterator<Item=&'a str>, mut l2: impl Iterator<Item=&'a str>) -> bool {
-        loop {
-            let e1 = l1.next();
-            let e2 = l2.next();
-            if e1.is_none() {
-                return if e2.is_none() {
-                    true
-                } else {
-                    false
-                };
-            } else if e2.is_none() {
-                return false;
-            } else {
-                if e1.unwrap() != e2.unwrap() {
-                    return false;
-                }
+        should_be_equal_list_of_lists(&mut bigrams, expected)
+    }
+
+    #[test]
+    fn test_bigrams_n_gt_len() {
+        let sequence = vec!["a"];
+        let mut bigrams = ngrams(sequence.iter(), 2);
+        assert!(bigrams.next().is_none());
+    }
+
+    #[test]
+    fn test_bigrams_empty_sequence() {
+        let sequence = vec![];
+        let mut bigrams = ngrams(sequence.iter(), 10);
+        assert!(bigrams.next().is_none());
+    }
+
+    #[test]
+    fn test_bigrams_n_eq_len() {
+        let sequence = vec!["a", "b"];
+        let mut bigrams = ngrams(sequence.iter(), 2);
+        let bigram1 = vec!["a", "b"];
+        let expected = vec![bigram1.iter()];
+
+        should_be_equal_list_of_lists(&mut bigrams, expected)
+    }
+
+    fn should_be_equal_list_of_lists<'a>(bigrams: &mut impl Iterator<Item=impl Iterator<Item=&'a &'a str>>, expected: Vec<Iter<&'a str>>) {
+        for (mut left_outer, mut right_outer) in bigrams.zip(expected.into_iter()) {
+            for (left_inner, right_inner) in left_outer.zip(right_outer) {
+                assert_eq!(left_inner, right_inner);
             }
+        }
+    }
+
+    fn should_be_equal_lists<'a>(left: impl Iterator<Item=&'a str>, right: Vec<&'a str>) {
+        for (left, right) in left.zip(right.into_iter()) {
+            assert_eq!(left, right);
         }
     }
 }

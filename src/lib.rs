@@ -1,4 +1,4 @@
 mod edit_distance;
 mod ngrams;
-mod lm;
-mod util;
+pub mod lm;
+pub mod util;
