@@ -1,5 +1,8 @@
-/// Pads a sequence of words
-/// sentence: sequence to pad, in the form of an Iterator of string slices.
+use std::slice::Iter;
+
+/// Returns a padded sequence of items before ngram extraction.
+///
+/// sequence: sequence of items to pad, in the form of an Iterator of string slices.
 /// pad_left: if set to true, prepends a padding symbol to the sentence
 /// left_pad_symbol: the padding symbol to prepend
 /// pad_right: if set to true, appends a padding symbol after the sentence
@@ -9,22 +12,65 @@ pub fn pad_sequence<'a>(sentence: impl Iterator<Item=&'a str> + 'static, pad_lef
     Padder::new(Box::new(sentence), pad_left, left_pad_symbol, pad_right, right_pad_symbol, n)
 }
 
-/// Pads a sequence of words, left-padding only. Convenience function that prevents useless arguments
-/// sentence: sequence to pad, in the form of an Iterator of string slices.
+/// Returns a padded sequence of items before ngram extraction, left-padding only. Convenience function that prevents useless arguments
+/// sequence: sequence of items to pad, in the form of an Iterator of string slices.
 /// left_pad_symbol: the padding symbol to prepend
 /// n: the n in n-grams; so for bigrams set to 2, etc
-pub fn pad_sequence_left<'a>(text: impl Iterator<Item=&'a str> + 'static, left_pad_symbol: &'static str, n: usize) -> impl Iterator<Item=&'a str> {
-    Padder::new(Box::new(text), true, left_pad_symbol, false, "", n)
+pub fn pad_sequence_left<'a>(sequence: impl Iterator<Item=&'a str> + 'static, left_pad_symbol: &'static str, n: usize) -> impl Iterator<Item=&'a str> {
+    Padder::new(Box::new(sequence), true, left_pad_symbol, false, "", n)
 }
 
-/// Pads a sequence of words, right-padding only. Convenience function that prevents useless arguments
+/// Returns a padded sequence of items before ngram extraction, right-padding only. Convenience function that prevents useless arguments
 ///
-/// sentence: sequence to pad, in the form of an Iterator of string slices.
+/// sequence: sequence of items to pad, in the form of an Iterator of string slices.
 /// pad_right: if set to true, appends a padding symbol after the sentence
 /// right_pad_symbol: the padding symbol to append
 /// n: the n in n-grams; so for bigrams set to 2, etc
-pub fn pad_sequence_right<'a>(text: impl Iterator<Item=&'a str> + 'static, right_pad_symbol: &'static str, n: usize) -> impl Iterator<Item=&'a str> {
-    Padder::new(Box::new(text), false, "", true, right_pad_symbol, n)
+pub fn pad_sequence_right<'a>(sequence: impl Iterator<Item=&'a str> + 'static, right_pad_symbol: &'static str, n: usize) -> impl Iterator<Item=&'a str> + 'a {
+    Padder::new(Box::new(sequence), false, "", true, right_pad_symbol, n)
+}
+
+/// Return the ngrams generated from a sequence of items, as an iterator.
+// this is a windowing function on a list
+// pub fn ngrams<'a>(mut sequence: impl Iterator<Item=&'a str> + 'static, n: usize) -> impl Iterator<Item=impl Iterator<Item=&'a str> + 'a> + 'a {
+pub fn ngrams<'a>(sequence: &'a Vec<&'a str>, n: usize) -> impl Iterator<Item=impl Iterator<Item=&'a &'a str> + 'a> + 'a {
+    let mut ngram = Vec::new();
+
+    NGramSequenceIter { sequence: sequence, n, current_ngram: ngram, index: 0, sequence_iter: None }
+}
+
+struct NGramSequenceIter<'a> {
+    sequence_iter: Option<Box<dyn Iterator<Item=&'a &'a str> + 'a>>,
+    sequence: &'a Vec<&'a str>,
+    n: usize,
+    current_ngram: Vec<&'a &'a str>,
+    index: usize,
+}
+
+impl<'a> Iterator for NGramSequenceIter<'a> {
+    type Item = Box<dyn Iterator<Item=&'a &'a str> + 'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_ngram.len() == 0 {
+            self.sequence_iter = Some(Box::new(self.sequence.iter()));
+            for i in 0..self.n {
+                self.current_ngram.push(self.sequence_iter.as_mut().unwrap().next().unwrap());
+                self.index += 1;
+            }
+
+            return Some(Box::new(self.current_ngram.clone().into_iter()));
+        } else {
+            self.current_ngram.remove(0);
+            let maybe_next = self.sequence_iter.as_mut().unwrap().next();
+            self.index += 1;
+            return if maybe_next.is_some() {
+                self.current_ngram.push(&maybe_next.unwrap());
+                Some(Box::new(self.current_ngram.clone().into_iter()))
+            } else {
+                None
+            };
+        }
+    }
 }
 
 pub(crate) struct Padder<'a> {
@@ -107,6 +153,33 @@ mod tests {
         let padded = pad_sequence(text, true, "left", true, "right", 2);
         assert!(equal(padded, vec!["left", "a", "b", "c", "right"].into_iter()));
     }
+
+    #[test]
+    fn test_bigrams() {
+        let sequence = vec!["a", "b", "c", "d"];
+        let mut bigrams = ngrams(&sequence, 2);
+        let mut bigram = bigrams.next().unwrap();
+        let item = bigram.next().unwrap();
+        assert_eq!(*item, "a");
+        let item = bigram.next().unwrap();
+        assert_eq!(*item, "b");
+        assert!(bigram.next().is_none());
+
+        let mut bigram = bigrams.next().unwrap();
+        let item = bigram.next().unwrap();
+        assert_eq!(*item, "b");
+        let item = bigram.next().unwrap();
+        assert_eq!(*item, "c");
+        assert!(bigram.next().is_none());
+
+        let mut bigram = bigrams.next().unwrap();
+        let item = bigram.next().unwrap();
+        assert_eq!(*item, "c");
+        let item = bigram.next().unwrap();
+        assert_eq!(*item, "d");
+        assert!(bigram.next().is_none());
+    }
+
 
     fn equal<'a>(mut l1: impl Iterator<Item=&'a str>, mut l2: impl Iterator<Item=&'a str>) -> bool {
         loop {
