@@ -56,6 +56,13 @@ pub fn ngrams<'a>(sequence: impl Iterator<Item=&'a &'a str> + 'a, n: usize) -> i
     ngrams::NGramSequenceIter::new(sequence, n)
 }
 
+pub fn bigrams<'a>(sequence: impl Iterator<Item=&'a &'a str> + 'a) -> impl Iterator<Item=impl Iterator<Item=&'a &'a str> + 'a> + 'a {
+    ngrams::NGramSequenceIter::new(sequence, 2)
+}
+
+pub fn trigrams<'a>(sequence: impl Iterator<Item=&'a &'a str> + 'a) -> impl Iterator<Item=impl Iterator<Item=&'a &'a str> + 'a> + 'a {
+    ngrams::NGramSequenceIter::new(sequence, 3)
+}
 
 #[cfg(test)]
 mod tests {
