@@ -12,5 +12,5 @@ Currently in it's infancy (but growing):
 * rltk::util::trigrams(\["a","b","c"]) == ngrams(..., 3)
 * rltk::util::everygrams(\["a","b","c"],2) ==  \[\["a"], \["a", "b"], \["b"], \["b", "c"]]
 * rltk::util::flatten(\[\["a"], \["a", "b"], \["b"], \["b", "c"]]) ==  \[\"a", "a", "b", "b", "b", "c"]
-* rltk::metrics::distance::edit_distance("")
+* rltk::metrics::distance::edit_distance(): calculate the levenshtein distance between two words (see doc)
 
