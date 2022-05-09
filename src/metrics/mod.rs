@@ -1,5 +1,10 @@
 pub mod distance;
 
+/// Calculate the Levenshtein edit-distance between two strings.
+/// The edit distance is the number of characters that need to be substituted, inserted, or deleted, to transform s1 into s2.
+/// For example, transforming “rain” to “shine” requires three steps, consisting of two substitutions and one insertion:
+/// “rain” -> “sain” -> “shin” -> “shine”.
+/// These operations could have been done in other orders, but at least three steps are needed.
 pub fn edit_distance(s1: &str, s2: &str) -> usize {
     distance::get_edit_distance_table(s1, s2)[s1.len()][s2.len()].value
 }

@@ -14,8 +14,6 @@ impl Element {
     }
 }
 
-
-
 // non recursive implementation requires a table
 // my guess is that this is more efficient (should check)
 pub(crate) fn get_edit_distance_table(word1: &str, word2: &str) -> Vec<Vec<Element>> {
