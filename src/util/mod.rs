@@ -64,6 +64,10 @@ pub fn trigrams<'a>(sequence: impl Iterator<Item=&'a &'a str> + 'a) -> impl Iter
     ngrams::NGramSequenceIter::new(sequence, 3)
 }
 
+pub fn everygrams<'a>(sequence: impl Iterator<Item=&'a &'a str> + 'a, n: usize) -> impl Iterator<Item=impl Iterator<Item=&'a &'a str> + 'a> + 'a {
+    ngrams::EveryGramSequenceIter::everygrams(sequence, n)
+}
+
 #[cfg(test)]
 mod tests {
     use std::slice::Iter;
@@ -154,10 +158,45 @@ mod tests {
         should_be_equal_list_of_lists(&mut bigrams, expected)
     }
 
-    fn should_be_equal_list_of_lists<'a>(bigrams: &mut impl Iterator<Item=impl Iterator<Item=&'a &'a str>>, expected: Vec<Iter<&'a str>>) {
-        for (mut left_outer, mut right_outer) in bigrams.zip(expected.into_iter()) {
-            for (left_inner, right_inner) in left_outer.zip(right_outer) {
-                assert_eq!(left_inner, right_inner);
+
+    #[test]
+    fn test_everygrams_n_eq_2() {
+        let sequence = vec!["a", "b", "c", "d"];
+        let mut bigrams = everygrams(sequence.iter(), 2);
+        let gram1 = vec!["a"];
+        let gram2 = vec!["a", "b"];
+        let gram3 = vec!["b"];
+        let gram4 = vec!["b", "c"];
+        let gram5 = vec!["c"];
+        let gram6 = vec!["c", "d"];
+        let expected = vec![gram1.iter(), gram2.iter(), gram3.iter(), gram4.iter(), gram5.iter(), gram6.iter()];
+
+        should_be_equal_list_of_lists(&mut bigrams, expected)
+    }
+
+    #[test]
+    fn test_everygrams_n_eq_3() {
+        let sequence = vec!["a", "b", "c", "d", "e"];
+        let mut bigrams = everygrams(sequence.iter(), 3);
+        let gram1 = vec!["a"];
+        let gram2 = vec!["a", "b"];
+        let gram3 = vec!["a", "b", "c"];
+        let gram4 = vec!["b"];
+        let gram5 = vec!["b", "c"];
+        let gram6 = vec!["b", "c", "d"];
+        let gram7 = vec!["c"];
+        let gram8 = vec!["c", "d"];
+        let gram9 = vec!["c", "d", "e"];
+        let expected = vec![gram1.iter(), gram2.iter(), gram3.iter(), gram4.iter(), gram5.iter(), gram6.iter(), gram7.iter(), gram8.iter(), gram9.iter()];
+
+        should_be_equal_list_of_lists(&mut bigrams, expected)
+    }
+
+    fn should_be_equal_list_of_lists<'a>(actual: &mut impl Iterator<Item=impl Iterator<Item=&'a &'a str>>, expected: Vec<Iter<&'a str>>) {
+        for (mut actual_outer, expected_outer) in actual.zip(expected.into_iter()) {
+            for (actual_inner, expected_inner) in actual_outer.zip(expected_outer) {
+                // println!("{} {}", actual_inner, expected_inner);
+                assert_eq!(actual_inner, expected_inner);
             }
         }
     }

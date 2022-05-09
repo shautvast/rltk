@@ -1,3 +1,5 @@
+// sandbox, to be removed
+
 use unicode_segmentation::UnicodeSegmentation;
 
 //could also be powers of 2 that are combined using bitwise-or
