@@ -2,6 +2,12 @@ __RLTK__
 
 An attempt to manually port some of nltk to rust.
 
+from https://www.nltk.org/api/nltk.lm.html:
+
+_So as to avoid re-creating the text in memory, both train and vocab are lazy iterators. They are evaluated on demand at training time._
+
+rltk has the same philosophy: everything is done using iterators (on iterators) on string slices.
+
 Currently in it's infancy (but growing): 
 * rltk::lm::preprocessing::pad_both_ends(\["a","b","c"], 2) -> "\<s>", "a", "b", "c", "\</s>"]
 * rltk::util::pad_sequence == same as above with customisation

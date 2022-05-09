@@ -5,6 +5,8 @@ pub mod distance;
 /// For example, transforming “rain” to “shine” requires three steps, consisting of two substitutions and one insertion:
 /// “rain” -> “sain” -> “shin” -> “shine”.
 /// These operations could have been done in other orders, but at least three steps are needed.
+///
+/// substitution cost is (for now at least) hardcoded as 2
 pub fn edit_distance(s1: &str, s2: &str) -> usize {
     distance::get_edit_distance_table(s1, s2)[s1.len()][s2.len()].value
 }
