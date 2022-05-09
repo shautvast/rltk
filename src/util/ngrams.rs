@@ -19,7 +19,7 @@ impl<'a> Iterator for NGramSequenceIter<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         return if self.current_ngram.len() == 0 {
-            for i in 0..self.n {
+            for _ in 0..self.n {
                 if let Some(item) = self.sequence.next() {
                     self.current_ngram.push(item);
                 } else {
@@ -62,9 +62,10 @@ impl<'a> EveryGramSequenceIter<'a> {
 impl<'a> Iterator for EveryGramSequenceIter<'a> {
     type Item = Box<dyn Iterator<Item=&'a &'a str> + 'a>;
 
+    //noinspection DuplicatedCode, hard to deduplicate because of early return
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_ngram.len() == 0 {
-            for i in 0..self.n {
+            for _ in 0..self.n {
                 if let Some(item) = self.sequence.next() {
                     self.current_ngram.push(item);
                 } else {
@@ -85,5 +86,40 @@ impl<'a> Iterator for EveryGramSequenceIter<'a> {
         }
 
         return Some(Box::new(self.current_ngram.clone().into_iter().take(self.current_size)));
+    }
+}
+
+pub struct FlatteningIter<'a> {
+    ngrams: Box<dyn Iterator<Item=Box<dyn Iterator<Item=&'a &'a str> + 'a>> + 'a>,
+    current_ngram: Option<Box<dyn Iterator<Item=&'a &'a str> + 'a>>,
+}
+
+impl<'a> FlatteningIter<'a> {
+    pub(crate) fn new(ngrams: impl Iterator<Item=Box<dyn Iterator<Item=&'a &'a str> + 'a>> + 'a) -> Self {
+        Self {
+            ngrams: Box::new(ngrams),
+            current_ngram: None,
+        }
+    }
+}
+
+impl<'a> Iterator for FlatteningIter<'a> {
+    type Item = &'a &'a str;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current_ngram.is_none() {
+            self.current_ngram = self.ngrams.next();
+        }
+
+        while let Some(ref mut current_ngram) = self.current_ngram {
+            let current_item = current_ngram.next();
+            if current_item.is_some() {
+                return current_item;
+            } else {
+                self.current_ngram = self.ngrams.next();
+            }
+        }
+
+        None
     }
 }
