@@ -16,8 +16,6 @@ fn main() {
     let combined = rltk::util::bigrams(rltk::lm::preprocessing::pad_both_ends(text[0].iter(),2));
     print(combined);
 
-    // padded_bigrams = list(pad_both_ends(text[0], n=2))
-    //     >>> list(everygrams(padded_bigrams, max_len=2))
     println!("\neverygrams:");
     let padded_bigrams: Vec<&&str> = rltk::lm::preprocessing::pad_both_ends(text[0].iter(),2).collect();
     println!("padded {:?}",padded_bigrams);
