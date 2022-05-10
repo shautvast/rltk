@@ -10,6 +10,7 @@ rltk has the same philosophy: everything is done using iterators (on iterators) 
 
 Currently in it's infancy (but growing): 
 * rltk::lm::preprocessing::pad_both_ends
+* rltk::lm::preprocessing::padded_everygrams
 * rltk::util::pad_sequence
 * rltk::util::pad_sequence_left
 * rltk::util::pad_sequence_right
