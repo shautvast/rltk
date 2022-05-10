@@ -83,7 +83,7 @@ impl<'a> Iterator for EveryGramSequenceIter<'a> {
             if maybe_next.is_some() {
                 self.current_ngram.push(&maybe_next.unwrap());
             } else {
-                self.n = 0; // not pretty, but ensures that the following next will be the last
+                self.n -= 1; // not pretty, but ensures correct ending
                 if self.current_ngram.len() == 0 {
                     return None;
                 }

@@ -172,7 +172,8 @@ mod tests {
         let gram4 = vec!["b", "c"];
         let gram5 = vec!["c"];
         let gram6 = vec!["c", "d"];
-        let expected = vec![gram1.iter(), gram2.iter(), gram3.iter(), gram4.iter(), gram5.iter(), gram6.iter()];
+        let gram7 = vec!["d"];
+        let expected = vec![gram1.iter(), gram2.iter(), gram3.iter(), gram4.iter(), gram5.iter(), gram6.iter(), gram7.iter()];
 
         should_be_equal_list_of_lists(&mut bigrams, expected);
     }
@@ -181,6 +182,7 @@ mod tests {
     fn test_everygrams_n_eq_3() {
         let sequence = vec!["a", "b", "c", "d", "e"];
         let mut bigrams = everygrams(sequence.iter(), 3);
+
         let gram1 = vec!["a"];
         let gram2 = vec!["a", "b"];
         let gram3 = vec!["a", "b", "c"];
@@ -190,7 +192,11 @@ mod tests {
         let gram7 = vec!["c"];
         let gram8 = vec!["c", "d"];
         let gram9 = vec!["c", "d", "e"];
-        let expected = vec![gram1.iter(), gram2.iter(), gram3.iter(), gram4.iter(), gram5.iter(), gram6.iter(), gram7.iter(), gram8.iter(), gram9.iter()];
+        let gram10 = vec!["d"];
+        let gram11 = vec!["d", "e"];
+        let gram12 = vec!["e"];
+
+        let expected = vec![gram1.iter(), gram2.iter(), gram3.iter(), gram4.iter(), gram5.iter(), gram6.iter(), gram7.iter(), gram8.iter(), gram9.iter(), gram10.iter(), gram11.iter(), gram12.iter()];
 
         should_be_equal_list_of_lists(&mut bigrams, expected);
     }
