@@ -82,7 +82,12 @@ impl<'a> Iterator for EveryGramSequenceIter<'a> {
             let maybe_next = self.sequence.next();
             if maybe_next.is_some() {
                 self.current_ngram.push(&maybe_next.unwrap());
-            } else { return None; }
+            } else {
+                self.n = 0; // not pretty, but ensures that the following next will be the last
+                if self.current_ngram.len() == 0 {
+                    return None;
+                }
+            }
         }
 
         return Some(Box::new(self.current_ngram.clone().into_iter().take(self.current_size)));

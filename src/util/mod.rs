@@ -1,6 +1,5 @@
 pub(crate) mod padding;
 pub(crate) mod ngrams;
-
 use padding::Padder;
 
 /// Returns a padded sequence of items before ngram extraction.
@@ -11,7 +10,7 @@ use padding::Padder;
 /// pad_right: if set to true, appends a padding symbol after the sentence
 /// right_pad_symbol: the padding symbol to append
 /// n: the n in n-grams; so for bigrams set to 2, etc
-pub fn pad_sequence<'a>(sentence: impl Iterator<Item=&'a str> + 'static, pad_left: bool, left_pad_symbol: &'static str, pad_right: bool, right_pad_symbol: &'static str, n: usize) -> impl Iterator<Item=&'a str> {
+pub fn pad_sequence<'a>(sentence: impl Iterator<Item=&'a &'a str> + 'a, pad_left: bool, left_pad_symbol: &'a &'a str, pad_right: bool, right_pad_symbol: &'a &'a str, n: usize) -> impl Iterator<Item=&'a &'a str> {
     Padder::new(Box::new(sentence), pad_left, left_pad_symbol, pad_right, right_pad_symbol, n)
 }
 
@@ -19,8 +18,8 @@ pub fn pad_sequence<'a>(sentence: impl Iterator<Item=&'a str> + 'static, pad_lef
 /// sequence: sequence of items to pad, in the form of an Iterator of string slices.
 /// left_pad_symbol: the padding symbol to prepend
 /// n: the n in n-grams; so for bigrams set to 2, etc
-pub fn pad_sequence_left<'a>(sequence: impl Iterator<Item=&'a str> + 'static, left_pad_symbol: &'static str, n: usize) -> impl Iterator<Item=&'a str> {
-    Padder::new(Box::new(sequence), true, left_pad_symbol, false, "", n)
+pub fn pad_sequence_left<'a>(sequence: impl Iterator<Item=&'a &'a str> + 'a, left_pad_symbol: &'a &'a str, n: usize) -> impl Iterator<Item=&'a &'a str> {
+    Padder::new(Box::new(sequence), true, left_pad_symbol, false, &"", n)
 }
 
 /// Returns a padded sequence of items before ngram extraction, right-padding only. Convenience function that prevents useless arguments
@@ -29,8 +28,8 @@ pub fn pad_sequence_left<'a>(sequence: impl Iterator<Item=&'a str> + 'static, le
 /// pad_right: if set to true, appends a padding symbol after the sentence
 /// right_pad_symbol: the padding symbol to append
 /// n: the n in n-grams; so for bigrams set to 2, etc
-pub fn pad_sequence_right<'a>(sequence: impl Iterator<Item=&'a str> + 'static, right_pad_symbol: &'static str, n: usize) -> impl Iterator<Item=&'a str> + 'a {
-    Padder::new(Box::new(sequence), false, "", true, right_pad_symbol, n)
+pub fn pad_sequence_right<'a>(sequence: impl Iterator<Item=&'a &'a str> + 'a, right_pad_symbol: &'a &'a str, n: usize) -> impl Iterator<Item=&'a &'a str> + 'a {
+    Padder::new(Box::new(sequence), false, &"", true, right_pad_symbol, n)
 }
 
 /// Return the ngrams generated from a sequence of items, as an iterator.
@@ -74,44 +73,44 @@ pub fn flatten<'a>(ngrams: impl Iterator<Item=Box<dyn Iterator<Item=&'a &'a str>
 
 #[cfg(test)]
 mod tests {
-    use std::slice::Iter;
     use super::*;
+    use crate::test::*;
 
     #[test]
     fn test_pad_both_ends_default_n2() {
-        let text = vec!["a", "b", "c"].into_iter();
-        let padded = pad_sequence(text, true, "<s>", true, "</s>", 2);
-        should_be_equal_lists2(padded, vec!["<s>", "a", "b", "c", "</s>"]);
+        let text = vec!["a", "b", "c"];
+        let padded = pad_sequence(text.iter(), true, &"<s>", true, &"</s>", 2);
+        should_be_equal_lists(padded, vec!["<s>", "a", "b", "c", "</s>"]);
     }
 
     #[test]
     fn test_pad_left() {
-        let text = vec!["a", "b", "c"].into_iter();
-        let padded = pad_sequence_left(text, "<s>", 2);
-        should_be_equal_lists2(padded, vec!["<s>", "a", "b", "c"]);
+        let text = vec!["a", "b", "c"];
+        let padded = pad_sequence_left(text.iter(), &"<s>", 2);
+        should_be_equal_lists(padded, vec!["<s>", "a", "b", "c"]);
     }
 
     #[test]
     fn test_pad_right() {
-        let text = vec!["a", "b", "c"].into_iter();
-        let padded = pad_sequence_right(text, "</s>", 2);
+        let text = vec!["a", "b", "c"];
+        let padded = pad_sequence_right(text.iter(), &"</s>", 2);
 
-        should_be_equal_lists2(padded, vec!["a", "b", "c", "</s>"]);
+        should_be_equal_lists(padded, vec!["a", "b", "c", "</s>"]);
     }
 
     #[test]
     fn test_pad_both_ends_default_n_eq_3() {
-        let text = vec!["a", "b", "c"].into_iter();
-        let padded = pad_sequence(text, true, "<s>", true, "</s>", 3);
-        should_be_equal_lists2(padded, vec!["<s>", "<s>", "a", "b", "c", "</s>", "</s>"]);
+        let text = vec!["a", "b", "c"];
+        let padded = pad_sequence(text.iter(), true, &"<s>", true, &"</s>", 3);
+        should_be_equal_lists(padded, vec!["<s>", "<s>", "a", "b", "c", "</s>", "</s>"]);
     }
 
     #[test]
     fn test_pad_both_ends_non_default_symbols() {
-        let text = vec!["a", "b", "c"].into_iter();
-        let padded = pad_sequence(text, true, "left", true, "right", 2);
+        let text = vec!["a", "b", "c"];
+        let padded = pad_sequence(text.iter(), true, &"left", true, &"right", 2);
 
-        should_be_equal_lists2(padded, vec!["left", "a", "b", "c", "right"]);
+        should_be_equal_lists(padded, vec!["left", "a", "b", "c", "right"]);
     }
 
     #[test]
@@ -159,7 +158,7 @@ mod tests {
         let bigram1 = vec!["a", "b"];
         let expected = vec![bigram1.iter()];
 
-        should_be_equal_list_of_lists(&mut bigrams, expected)
+        should_be_equal_list_of_lists(&mut bigrams, expected);
     }
 
 
@@ -175,7 +174,7 @@ mod tests {
         let gram6 = vec!["c", "d"];
         let expected = vec![gram1.iter(), gram2.iter(), gram3.iter(), gram4.iter(), gram5.iter(), gram6.iter()];
 
-        should_be_equal_list_of_lists(&mut bigrams, expected)
+        should_be_equal_list_of_lists(&mut bigrams, expected);
     }
 
     #[test]
@@ -193,7 +192,7 @@ mod tests {
         let gram9 = vec!["c", "d", "e"];
         let expected = vec![gram1.iter(), gram2.iter(), gram3.iter(), gram4.iter(), gram5.iter(), gram6.iter(), gram7.iter(), gram8.iter(), gram9.iter()];
 
-        should_be_equal_list_of_lists(&mut bigrams, expected)
+        should_be_equal_list_of_lists(&mut bigrams, expected);
     }
 
     #[test]
@@ -202,26 +201,5 @@ mod tests {
         let expected = vec!["a", "a", "b", "a", "b", "c",  "b", "b", "c", "b", "c", "d", "c", "c", "d", "c", "d", "e"];
 
         should_be_equal_lists(flatten(everygrams(sequence.iter(), 3)), expected);
-    }
-
-    fn should_be_equal_list_of_lists<'a>(actual: &mut impl Iterator<Item=impl Iterator<Item=&'a &'a str>>, expected: Vec<Iter<&'a str>>) {
-        for (actual_outer, expected_outer) in actual.zip(expected.into_iter()) {
-            for (actual_inner, expected_inner) in actual_outer.zip(expected_outer) {
-                // println!("{} {}", actual_inner, expected_inner);
-                assert_eq!(actual_inner, expected_inner);
-            }
-        }
-    }
-
-    fn should_be_equal_lists<'a>(left: impl Iterator<Item=&'a &'a str>, right: Vec<&'a str>) {
-        for (left, right) in left.zip(right.into_iter()) {
-            assert_eq!(*left, right);
-        }
-    }
-
-    fn should_be_equal_lists2<'a>(left: impl Iterator<Item=&'a str>, right: Vec<&'a str>) {
-        for (left, right) in left.zip(right.into_iter()) {
-            assert_eq!(left, right);
-        }
     }
 }
