@@ -18,24 +18,19 @@ mod tests{
     #[test]
     fn test(){
         let sentence = vec!["a","b", "c"];
-        let bigrams = padded_everygrams(sentence.iter(),2);
-        for b in bigrams.into_iter(){
-            for o in b{
-                print!("{}, ",o);
-            }
-            println!();
-        }
-        // let bigram1 = vec!["<s>"];
-        // let bigram2 = vec!["<s>", "a"];
-        // let bigram3 = vec!["a"];
-        // let bigram4 = vec!["a", "b"];
-        // let bigram5 = vec!["b"];
-        // let bigram6 = vec!["b", "c"];
-        // let bigram7 = vec!["c"];
-        // let bigram8 = vec!["c", "</s>"];
-        // let bigram9 = vec!["</s>"];
-        // let expected = vec![bigram1.iter(), bigram2.iter(), bigram3.iter(), bigram4.iter(), bigram5.iter(), bigram6.iter(),bigram7.iter(),bigram8.iter(),bigram9.iter()];
-        //
-        // crate::test::should_be_equal_list_of_lists(&mut bigrams, expected)
+        let mut bigrams = padded_everygrams(sentence.iter(),2);
+
+        let bigram1 = vec!["<s>"];
+        let bigram2 = vec!["<s>", "a"];
+        let bigram3 = vec!["a"];
+        let bigram4 = vec!["a", "b"];
+        let bigram5 = vec!["b"];
+        let bigram6 = vec!["b", "c"];
+        let bigram7 = vec!["c"];
+        let bigram8 = vec!["c", "</s>"];
+        let bigram9 = vec!["</s>"];
+        let expected = vec![bigram1.iter(), bigram2.iter(), bigram3.iter(), bigram4.iter(), bigram5.iter(), bigram6.iter(),bigram7.iter(),bigram8.iter(),bigram9.iter()];
+
+        crate::test::should_be_equal_list_of_lists(&mut bigrams, expected)
     }
 }
