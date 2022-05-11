@@ -1,4 +1,4 @@
-use crate::util::flatten;
+// use crate::util::flatten;
 
 /// Pads a sequence of words with defaults; prepends "<s>" and appends "<s>"
 ///
@@ -12,9 +12,9 @@ pub fn padded_everygrams<'a>(sentence: impl Iterator<Item=&'a &'a str> + 'a, ord
     crate::util::everygrams(pad_both_ends(sentence, order), order)
 }
 
-pub fn padded_everygram_pipeline<'a>(text: impl Iterator<Item=&'a &'a str> + 'a, order: usize) -> (impl Iterator<Item=&'a &'a str>){
-    (text.iter().map(|sent| rltk::lm::preprocessing::pad_both_ends(sent.iter(), order)).flatten())//vocab
-}
+// pub fn padded_everygram_pipeline<'a>(text: impl Iterator<Item=&'a &'a str> + 'a, order: usize) -> (impl Iterator<Item=&'a &'a str>){
+//     (text.map(|sent| crate::lm::preprocessing::pad_both_ends(sent), order)).flatten())//vocab
+// }
 
 #[cfg(test)]
 mod tests{
