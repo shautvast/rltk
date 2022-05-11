@@ -31,8 +31,8 @@ impl <'a>Vocabulary<'a> {
         };
     }
 
-    pub(crate) fn lookup_sentence(&self, words: impl Iterator<Item=&'a &'a  str> + 'a) -> impl Iterator<Item=&'a str> + '_{
-        words.map(|word| if self.counter.get(word) > self.cutoff {
+    pub(crate) fn lookup_sentence(&self, sentence: impl Iterator<Item=&'a &'a  str> + 'a) -> impl Iterator<Item=&'a str> + '_{
+        sentence.map(|word| if self.counter.get(word) > self.cutoff {
             word
         } else {
             self.unk_label
@@ -83,7 +83,7 @@ mod tests {
     fn test_lookup_below_cutoff() {
         let mut vocab = Vocabulary::new(1);
         vocab.update_sentence(["a", "b", "c"].iter());
-        let looked_up: Vec<&str> = vocab.lookup_words(["a", "b", "c"].iter()).collect();
+        let looked_up: Vec<&str> = vocab.lookup_sentence(["a", "b", "c"].iter()).collect();
         assert_eq!(looked_up, vec!["<UNK>", "<UNK>", "<UNK>"]);
     }
 
