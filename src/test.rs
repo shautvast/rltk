@@ -1,8 +1,8 @@
 use std::slice::Iter;
 
-pub fn should_be_equal_lists<'a>(left: impl Iterator<Item=&'a &'a str>, right: Vec<&'a str>) {
+pub fn should_be_equal_lists<'a>(left: impl Iterator<Item=&'a &'a str>, right: &[&'a str]) {
     for (left, right) in left.zip(right.into_iter()) {
-        assert_eq!(*left, right);
+        assert_eq!(left, right);
     }
 }
 
